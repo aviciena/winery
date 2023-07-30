@@ -69,7 +69,8 @@
     "react-native-ui-stepper": "^1.2.4",
     "reactotron-mst": "3.1.4",
     "reactotron-react-js": "^3.3.7",
-    "reactotron-react-native": "5.0.3"
+    "reactotron-react-native": "5.0.3",
+    "rn-sliding-up-panel": "^2.4.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

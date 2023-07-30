@@ -1,12 +1,15 @@
-import React, { FC, useEffect, useState } from "react"
+import React, { FC, useEffect, useRef, useState } from "react"
 import { AppStackScreenProps } from "app/navigators"
 import { ImageStyle, View, ViewStyle, useWindowDimensions } from "react-native"
 import { colors, spacing } from "app/theme"
-import { Icon, TextField, Footer } from "app/components/atoms"
+import { Icon, Text, TextField, Toggle, ViewCart } from "app/components/atoms"
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view'
-import { Header } from "app/components/molecules"
+import { Card, Header } from "app/components/molecules"
 import { NoDataAvailable } from "app/components/molecules/NoDataAvailable"
 import { ProductList, ProductListData } from "app/components/organisms/ProductList"
+import SlidingUpContainer from "app/components/molecules/SlidingUpContainer"
+import ItemCard from "app/components/molecules/ItemCard"
+import { ScrollView } from "react-native-gesture-handler"
 
 interface ProductListScreenProps extends AppStackScreenProps<"ProductList"> { }
 
@@ -32,27 +35,6 @@ const MockDataList: ProductListData[] = [
     image: require("../../assets/data/image3.png"),
     count: 0,
   },
-  {
-    id: 4,
-    name: "Veuve Clicquot Brut Set x 6 法國凱歌香檳 x 6",
-    price: "NT 36,000",
-    image: require("../../assets/data/image2.png"),
-    count: 0,
-  },
-  {
-    id: 5,
-    name: "Veuve Clicquot Brut Set x 6 法國凱歌香檳 x 6",
-    price: "NT 36,000",
-    image: require("../../assets/data/image3.png"),
-    count: 0,
-  },
-  {
-    id: 6,
-    name: "Veuve Clicquot Brut Set x 6 法國凱歌香檳 x 6",
-    price: "NT 36,000",
-    image: require("../../assets/data/image1.png"),
-    count: 0,
-  }
 ]
 
 const EmptyRoute = () => (<NoDataAvailable text="No Data Available" />);
@@ -69,6 +51,7 @@ const renderTabBar = (props: any) => (
 export const ProductListScreen: FC<ProductListScreenProps> = function ContactsScreen(_props
 ) {
   const { navigation } = _props;
+  const panelRef = useRef(null)
   const layout = useWindowDimensions();
 
   const [index, setIndex] = useState(0);
@@ -106,6 +89,84 @@ export const ProductListScreen: FC<ProductListScreenProps> = function ContactsSc
     }
   }
 
+  const generateCartItems = () => {
+    return addToCart.map((item, index) => (
+      <ItemCard
+        data={item}
+        key={item.id.toString()}
+        index={index}
+        onDeleteItem={onDeleteCartItem}
+        onPressStepper={onPressStepperCartHandler}
+      />
+    ));
+  }
+
+  const onDeleteCartItem = (index: number) => {
+    const tempData = JSON.parse(JSON.stringify(addToCart));
+
+    const tempDataList = JSON.parse(JSON.stringify(dataList));
+    const foundIdx = tempDataList.findIndex((x: ProductListData) => x.id == tempData[index].id);
+    if (foundIdx !== -1) {
+      tempDataList[foundIdx].count = 0;
+    }
+
+    setDataList(tempDataList);
+
+    tempData.splice(index, 1);
+    setAddToCard(tempData);
+  }
+
+  const onPressStepperCartHandler = (type: string, index: number) => {
+    const tempDataList = JSON.parse(JSON.stringify(dataList));
+    const foundIdx = tempDataList.findIndex((x: ProductListData) => x.id == addToCart[index].id);
+    if (foundIdx !== -1) {
+      if (type === "increment") {
+        tempDataList[foundIdx].count += 1;
+      } else {
+        tempDataList[foundIdx].count -= 1;
+      }
+
+      setDataList(tempDataList);
+    }
+  }
+
+  const geTotalPrice = () => {
+    let total: number = 0;
+    for (let data of addToCart) {
+      const { price } = data;
+      const splice = price.split("NT ");
+      const priceTemp = splice[1].replace(",", "");
+      total += parseInt(priceTemp);
+    }
+
+    const totalStr = Number(total)
+      .toFixed(2)
+      .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+
+    return totalStr.split(".")[0];
+  }
+
+  const cartContainer = () => (
+    <ScrollView>
+      <View style={$cartContainer}>
+        <View style={$cartHeaderWrapper}>
+          <Text text="Total" style={{ color: colors.palette.white }} size="sm" />
+          <Text text={`NT ${geTotalPrice()}`} style={{ color: colors.palette.pr4 }} size="sm" />
+        </View>
+        <Card
+          style={$cartCardWrapper}
+          LeftComponent={
+            <Text text="Customize order?" style={{ color: colors.palette.white }} size="sm" weight="bold" />
+          }
+          RightComponent={
+            <Toggle variant="switch" value={false} inputInnerStyle={{ backgroundColor: colors.palette.warnig }} />
+          }
+        />
+        {generateCartItems()}
+      </View>
+    </ScrollView>
+  )
+
   return (
     <View style={$container}>
       <Header
@@ -134,7 +195,13 @@ export const ProductListScreen: FC<ProductListScreenProps> = function ContactsSc
         style={{ marginTop: spacing.md }}
         pagerStyle={{ margin: spacing.sm }}
       />
-      <Footer text={addToCart.length > 0 ? `View cart (${addToCart.length})` : 'View cart'} />
+      <ViewCart
+        text={addToCart.length > 0 ? `View cart (${addToCart.length})` : 'View cart'}
+        onPress={() => panelRef.current.show()}
+      />
+      <SlidingUpContainer ref={panelRef} tx="productListScreen.cartText">
+        {cartContainer()}
+      </SlidingUpContainer>
     </View>
   )
 }
@@ -153,4 +220,25 @@ const $inputWrapper: ViewStyle = {
 const $iconStyle: ImageStyle = {
   marginTop: spacing.xs,
   marginRight: spacing.md
+}
+
+const $cartContainer: ViewStyle = {
+  display: "flex",
+  flex: 1,
+  margin: spacing.lg,
+  paddingBottom: 30
+}
+
+const $cartHeaderWrapper: ViewStyle = {
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginBottom: spacing.md
+}
+
+const $cartCardWrapper: ViewStyle = {
+  backgroundColor: colors.palette.cardBg,
+  padding: spacing.md,
+  minHeight: 45,
+  borderColor: colors.palette.cardBg
 }

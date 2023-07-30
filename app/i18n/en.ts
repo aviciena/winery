@@ -27,7 +27,8 @@ const en = {
     heading: "Winery"
   },
   productListScreen: {
-    addToCart: "Add to card"
+    addToCart: "Add to card",
+    cartText: "Cart"
   }
 }
 

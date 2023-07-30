@@ -37,12 +37,18 @@ const palette = {
   overlay50: "rgba(25, 16, 21, 0.5)",
 
   black: "#1E1E1E",
+  black70: "#424C5A",
+  blackLine: "#353535",
   white: "white",
 
   purple: "#A060FA",
   robinEggBlue: "#C800CC",
 
-  info: "#3CA6EC"
+  info: "#3CA6EC",
+  pr4: "#AA5AFA",
+  warnig: "#EF9533",
+
+  cardBg: "#2D2D2D"
 } as const
 
 export const colors = {
